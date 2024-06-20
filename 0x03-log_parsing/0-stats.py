@@ -1,48 +1,37 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
+""" script that reads stdin line by line and computes metrics"""
 import sys
-import signal
-
-total_file_size = 0
-status_codes_count = {200: 0, 301: 0, 400: 0,
-                      401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
-line_count = 0
 
 
-def print_stats():
-    print(f"File size: {total_file_size}")
-    for code in sorted(status_codes_count):
-        if status_codes_count[code] > 0:
-            print(f"{code}: {status_codes_count[code]}")
+def print_stats(file_size, status):
+    """ print stats """
+    print(f"File size: {file_size}")
+    for key in sorted(status.keys()):
+        if status[key] != 0:
+            print(f"{key}: {status[key]}")
 
 
-def signal_handler(sig, frame):
-    print_stats()
-    sys.exit(0)
-
-
-signal.signal(signal.SIGINT, signal_handler)
-
-for line in sys.stdin:
-    parts = line.split()
-    if len(parts) != 9:
-        continue
-    ip, _, _, date, request, _, status_code, file_size = parts[0], parts[
-        1], parts[2], parts[3], parts[4], parts[5], parts[6], parts[7]
-
+def main():
+    """ main function """
+    countre = 0
+    file_size = 0
+    status = {s: 0 for s in [200, 301, 400, 401, 403, 404, 405, 500]}
     try:
-        status_code = int(status_code)
-        file_size = int(file_size)
-    except ValueError:
-        continue
+        for line in sys.stdin:
+            countre += 1
+            data = line.split()
+            try:
+                file_size += int(data[-1])
+                status[int(data[-2])] += 1
+            except Exception:
+                pass
+            if countre % 10 == 0:
+                print_stats(file_size, status)
+        print_stats(file_size, status)
+    except KeyboardInterrupt:
+        print_stats(file_size, status)
+        raise
 
-    if status_code not in status_codes_count:
-        continue
 
-    total_file_size += file_size
-    status_codes_count[status_code] += 1
-    line_count += 1
-
-    if line_count % 10 == 0:
-        print_stats()
-
-print_stats()
+if __name__ == "__main__":
+    main()
