@@ -1,57 +1,47 @@
-#!/usr/bin/env python3
-import sys
+#!/usr/bin/python3
+""" N queens problem """
 
 
-def print_usage_and_exit():
-    print("Usage: nqueens N")
-    sys.exit(1)
+def nQueen(n):
+    """ N queens problem """
+    invalid = set()
+    pos = set()
+    neg = set()
+    res = []
+    board = [['.'] * n for _ in range(n)]
 
-
-def is_valid(board, row, col):
-    for i in range(row):
-        if board[i] == col or \
-           board[i] - i == col - row or \
-           board[i] + i == col + row:
-            return False
-    return True
-
-
-def solve_nqueens(N):
-    def solve(row):
-        if row == N:
-            result.append(board[:])
+    def backtrack(row):
+        if row == n:
+            res.append([[i, j] for i in range(n)
+                        for j in range(n) if board[i][j] == 'Q'])
             return
-        for col in range(N):
-            if is_valid(board, row, col):
-                board[row] = col
-                solve(row + 1)
-                board[row] = -1
-
-    result = []
-    board = [-1] * N
-    solve(0)
-    return result
-
-
-def main():
-    if len(sys.argv) != 2:
-        print_usage_and_exit()
-
-    try:
-        N = int(sys.argv[1])
-    except ValueError:
-        print("N must be a number")
-        sys.exit(1)
-
-    if N < 4:
-        print("N must be at least 4")
-        sys.exit(1)
-
-    solutions = solve_nqueens(N)
-    for solution in solutions:
-        formatted_solution = [[i, solution[i]] for i in range(N)]
-        print(formatted_solution)
+        for col in range(n):
+            if col in invalid or (row - col) in neg or (row + col) in pos:
+                continue
+            invalid.add(col)
+            neg.add(row - col)
+            pos.add(row + col)
+            board[row][col] = 'Q'
+            backtrack(row + 1)
+            invalid.remove(col)
+            neg.remove(row - col)
+            pos.remove(row + col)
+            board[row][col] = '.'
+    backtrack(0)
+    return res
 
 
 if __name__ == "__main__":
-    main()
+    """ the entry point """
+    import sys
+    if len(sys.argv) != 2:
+        print("Usage: nqueens N")
+        sys.exit(1)
+    if not sys.argv[1].isdigit():
+        print("N must be a number")
+        sys.exit(1)
+    if int(sys.argv[1]) < 4:
+        print("N must be at least 4")
+        sys.exit(1)
+    for solution in nQueen(int(sys.argv[1])):
+        print(solution)
